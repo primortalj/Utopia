@@ -7,11 +7,16 @@
   "permissions": [
     "webRequest",
     "storage",
-    "activeTab"
+    "activeTab",
+    "contextMenus",
+    "notifications",
+    "alarms"
   ],
   
   "host_permissions": [
-    "*://utopia.*/*"
+    "*://utopia.*/*",
+    "https://registry.utopia.network/*",
+    "https://dht.uns.org/*"
   ],
   
   "background": {
@@ -48,7 +53,7 @@
   
   "web_accessible_resources": [
     {
-      "resources": ["resolver.js"],
+      "resources": ["popup.html", "options.html"],
       "matches": ["<all_urls>"]
     }
   ]
