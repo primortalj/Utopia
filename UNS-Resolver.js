@@ -1,7 +1,10 @@
 /**
  * Utopia Naming System (UNS) Resolver
- * Proof-of-concept implementation
+ * Proof-of-concept implementation with UT-IP encoding support
  */
+
+// Import UT-IP Encoder
+const { UTIPEncoder } = require('./UT-IP-Encoder.js');
 
 class UNSResolver {
   constructor(options = {}) {
@@ -12,6 +15,13 @@ class UNSResolver {
     ];
     this.cache = new Map();
     this.cacheTTL = options.cacheTTL || 3600; // 1 hour default
+    
+    // Initialize UT-IP encoder
+    this.utipEncoder = new UTIPEncoder({
+      securityLevel: options.utipSecurityLevel || 1,
+      rotationKey: options.utipRotationKey || 0
+    });
+    this.utipEnabled = options.utipEnabled !== false; // Default enabled
   }
 
   /**
@@ -246,6 +256,98 @@ class UNSResolver {
   }
 
   /**
+   * Resolve UNS address and return result with UT-IP encoding
+   * @param {string} address - UNS address
+   * @param {boolean} includeUTIP - Whether to include UT-IP encoding
+   * @returns {Promise<object>} Resolution result with optional UT-IP encoding
+   */
+  async resolveWithUTIP(address, includeUTIP = true) {
+    try {
+      const resolvedURL = await this.resolve(address);
+      
+      const result = {
+        unsAddress: address,
+        resolvedURL: resolvedURL,
+        timestamp: new Date().toISOString()
+      };
+      
+      if (includeUTIP && this.utipEnabled) {
+        result.utip = {
+          encodedURL: this.utipEncoder.encodeInText(resolvedURL),
+          securityLevel: this.utipEncoder.securityLevel,
+          ipMappings: this.extractAndEncodeIPs(resolvedURL)
+        };
+      }
+      
+      return result;
+    } catch (error) {
+      throw new Error(`UNS resolution with UT-IP failed: ${error.message}`);
+    }
+  }
+  
+  /**
+   * Extract IP addresses from URL and show UT-IP encoding
+   * @param {string} url - URL to process
+   * @returns {array} Array of IP encoding demonstrations
+   */
+  extractAndEncodeIPs(url) {
+    const ipRegex = /\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b/g;
+    const matches = url.match(ipRegex) || [];
+    
+    return matches.map(ip => {
+      return {
+        original: ip,
+        encoded: this.utipEncoder.encode(ip),
+        symbolMapping: this.utipEncoder.getUsedSymbols(ip)
+      };
+    });
+  }
+  
+  /**
+   * Enable/disable UT-IP encoding
+   * @param {boolean} enabled - Whether UT-IP should be enabled
+   */
+  setUTIPEnabled(enabled) {
+    this.utipEnabled = enabled;
+  }
+  
+  /**
+   * Configure UT-IP encoder settings
+   * @param {object} options - UT-IP configuration options
+   */
+  configureUTIP(options) {
+    if (options.securityLevel !== undefined) {
+      this.utipEncoder.securityLevel = options.securityLevel;
+    }
+    if (options.rotationKey !== undefined) {
+      this.utipEncoder.rotationKey = options.rotationKey;
+    }
+    if (options.customMapping) {
+      this.utipEncoder.setCustomMapping(options.customMapping);
+    }
+  }
+  
+  /**
+   * Get UT-IP encoder configuration
+   * @returns {object} Current UT-IP configuration
+   */
+  getUTIPConfig() {
+    return {
+      enabled: this.utipEnabled,
+      ...this.utipEncoder.exportConfig()
+    };
+  }
+  
+  /**
+   * Demonstrate UT-IP encoding for a given IP
+   * @param {string} ipAddress - IP address to encode
+   * @returns {object} UT-IP demonstration
+   */
+  demonstrateUTIP(ipAddress) {
+    return this.utipEncoder.demonstrateEncoding(ipAddress);
+  }
+
+  /**
    * Clear resolver cache
    */
   clearCache() {
@@ -276,25 +378,25 @@ class DHTRegistry {
   }
 
   async lookup(network) {
-    // Mock implementation - would connect to DHT network
+    // Mock implementation - returns direct subdomain mapping for demo
     const mockData = {
       'dillanet': {
         owner: 'did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK',
-        resolvers: ['https://dillanet.org/uns'],
+        resolvers: ['mock://direct-resolution'], // Use mock resolver for demo
         subdomains: {
-          '.obsidiannotes': 'https://notes.dillanet.org',
-          '.nextcloud': 'https://cloud.dillanet.org',
-          '.git': 'https://git.dillanet.org'
+          '.obsidiannotes': 'https://192.168.1.50:8080/notes',
+          '.nextcloud': 'https://10.0.0.100:9000/cloud', 
+          '.git': 'https://172.16.0.10:3000/git'
         },
         signature: 'mock-signature',
         timestamp: '2024-08-06T13:00:00Z'
       },
       'alice': {
         owner: 'did:key:z6MkpTHR8VNsBxYAAWHut2Geadd9jSwuBV8xRoAnwWsdvktH',
-        resolvers: ['https://alice.personal.cloud/uns'],
+        resolvers: ['mock://direct-resolution'],
         subdomains: {
-          '.blog': 'https://alice.blog',
-          '.photos': 'https://photos.alice.cloud'
+          '.blog': 'https://192.168.0.20:4000/blog',
+          '.photos': 'https://10.0.1.30:5000/gallery'
         }
       }
     };
