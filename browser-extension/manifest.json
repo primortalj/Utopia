@@ -1,0 +1,60 @@
+{
+  "manifest_version": 3,
+  "name": "Utopia Naming System (UNS) Resolver",
+  "version": "1.0.0",
+  "description": "Resolve utopia.* addresses to their actual destinations using the Utopia Naming System",
+  
+  "permissions": [
+    "webRequest",
+    "storage",
+    "activeTab",
+    "contextMenus",
+    "notifications",
+    "alarms"
+  ],
+  
+  "host_permissions": [
+    "*://utopia.*/*",
+    "https://registry.utopia.network/*",
+    "https://dht.uns.org/*"
+  ],
+  
+  "background": {
+    "service_worker": "background.js"
+  },
+  
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "UNS Resolver",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  
+  "options_page": "options.html",
+  
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ],
+  
+  "web_accessible_resources": [
+    {
+      "resources": ["popup.html", "options.html"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
