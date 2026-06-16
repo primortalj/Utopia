@@ -23,8 +23,8 @@ class UTIPEncoder {
       '7': '⊝',  // Square with minus
       '8': '⊚',  // Circled dot
       '9': '⊙',  // Circle with dot
-      '.': '⌐',  // Period separator (right angle)
-      ':': '◊'   // Port separator (diamond)
+      '.': '◊',  // Period separator
+      ':': '◈'   // Port separator
     };
     
     // Reverse mapping for decoding
